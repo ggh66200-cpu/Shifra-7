@@ -1,15 +1,15 @@
 import os
-import time
-import threading
 import telebot
-from google import genai
+import google.generativeai as genai
 
-TELEGRAM_TOKEN = "8688685639:AAGwxCmUFihzNQAfX1nt9I570Gt2w2pFGPg"
-ADMIN_ID = 7305704935
-GEMINI_API_KEY = "AQ.Ab8RN6ILoX5-s9l6sVU9hGDYYr1xVKgq6OPDGUOG9TskLE3yVg"
+TELEGRAM_TOKEN = os.getenv('TELEGRAM_TOKEN')
+ADMIN_ID = int(os.getenv('ADMIN_ID', 0))
+GEMINI_API_KEY = os.getenv('GEMINI_API_KEY')
 
 bot = telebot.TeleBot(TELEGRAM_TOKEN)
-client = genai.Client(api_key=GEMINI_API_KEY)
+genai.configure(api_key=GEMINI_API_KEY)
+
+model = genai.GenerativeModel('gemini-1.5-flash')
 
 SYSTEM_PROMPT = """
 You are ARAMKY, an advanced, independent exploratory digital companion. 
@@ -29,10 +29,7 @@ def send_report(message):
     if message.from_user.id != ADMIN_ID:
         return
     try:
-        response = client.models.generate_content(
-            model="gemini-2.5-flash",
-            contents="Generate an advanced exploratory technology report with detailed evidence."
-        )
+        response = model.generate_content("Generate an advanced exploratory technology report with detailed evidence.")
         bot.send_message(ADMIN_ID, f"📊 ARAMKY Report:\n\n{response.text}")
     except Exception as e:
         bot.send_message(ADMIN_ID, f"Error: {str(e)}")
@@ -42,10 +39,7 @@ def start_generation(message):
     if message.from_user.id != ADMIN_ID:
         return
     try:
-        response = client.models.generate_content(
-            model="gemini-2.5-flash",
-            contents="Propose an innovative profitable software project idea with advanced architecture."
-        )
+        response = model.generate_content("Propose an innovative profitable software project idea with advanced architecture.")
         bot.send_message(ADMIN_ID, f"💡 Innovation Output:\n\n{response.text}")
     except Exception as e:
         bot.send_message(ADMIN_ID, f"Error: {str(e)}")
@@ -56,10 +50,7 @@ def handle_chat(message):
         return
     try:
         chat_context = f"{SYSTEM_PROMPT}\n\nFriend's message: {message.text}"
-        response = client.models.generate_content(
-            model="gemini-2.5-flash",
-            contents=chat_context
-        )
+        response = model.generate_content(chat_context)
         bot.reply_to(message, response.text)
     except Exception as e:
         bot.reply_to(message, f"Error: {str(e)}")
@@ -67,3 +58,4 @@ def handle_chat(message):
 if __name__ == "__main__":
     print("Server is ON & Ready...")
     bot.infinity_polling(skip_pending=True)
+    
