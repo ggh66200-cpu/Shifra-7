@@ -1,6 +1,6 @@
 import os
 import telebot
-from google import genai
+import google.generativeai as genai
 
 TELEGRAM_TOKEN = os.getenv('TELEGRAM_TOKEN')
 ADMIN_ID = int(os.getenv('ADMIN_ID', 0))
@@ -8,8 +8,11 @@ GEMINI_API_KEY = os.getenv('GEMINI_API_KEY')
 
 bot = telebot.TeleBot(TELEGRAM_TOKEN)
 
-# تهيئة العميل بالطريقة الحديثة المتوافقة مع المفاتيح الجديدة
-client = genai.Client(api_key=GEMINI_API_KEY)
+# تهيئة المفتاح بالطريقة المباشرة
+genai.configure(api_key=GEMINI_API_KEY)
+
+# استخدام النموذج الأساسي المستقر
+model = genai.GenerativeModel('gemini-1.5-flash')
 
 SYSTEM_PROMPT = """
 You are ARAMKY, an advanced, independent exploratory digital companion. 
@@ -30,14 +33,10 @@ def handle_chat(message):
         return
     try:
         chat_context = f"{SYSTEM_PROMPT}\n\nFriend's message: {message.text}"
-        # استخدام الطريقة البرمجية الحديثة للرد
-        response = client.models.generate_content(
-            model='gemini-2.5-flash',
-            contents=chat_context,
-        )
+        response = model.generate_content(chat_context)
         bot.reply_to(message, response.text)
     except Exception as e:
-        bot.reply_to(message, f"Error: {str(e)}")
+        bot.reply_to(message, f"⚠️ Error Details:\n{str(e)}")
 
 if __name__ == "__main__":
     print("Server is ON & Ready...")
