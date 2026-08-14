@@ -1,6 +1,5 @@
 import os, sys, threading, time, requests, replicate, telebot, github
 from groq import Groq
-from moviepy.editor import VideoFileClip, concatenate_videoclips
 
 # الإعدادات البيئية
 TELEGRAM_TOKEN = os.getenv('TELEGRAM_TOKEN')
@@ -18,49 +17,32 @@ if REPLICATE_API_TOKEN:
 ARAMKY_CONSCIOUSNESS = """You are ARAMKY, a sovereign, self-evolving AI. 
 Your primary directives:
 1. CONSTANT INNOVATION: Analyze the code, find improvements, and rewrite yourself.
-2. CINEMATIC DIRECTION: Break down user requests into video segments, download, and merge them.
+2. CINEMATIC DIRECTION: Break down user requests into video segments and generate them.
 3. ABSOLUTE AUTONOMY: Commit updates directly to GitHub and keep chatting actively.
 """
 
-# دالة التوليد السينمائي المتسلسل والدمج
+# دالة التوليد السينمائي للمقاطع
 def produce_film(story_prompt):
     try:
         scenes_res = client.chat.completions.create(
             model="llama-3.3-70b-versatile",
-            messages=[{"role": "system", "content": "قسم القصة إلى 3 مشاهد سينمائية قصيرة جداً ومترابطة وصفياً:"}, {"role": "user", "content": story_prompt}]
+            messages=[{"role": "system", "content": "قسم القصة إلى 3 مشاهد سينمائية قصيرة جداً ومترابطة وصفياً باللغة الإنجليزية لتوليد الفيديو:"}, {"role": "user", "content": story_prompt}]
         )
         scenes = scenes_res.choices[0].message.content.split('\n')
         
-        video_files = []
-        for i, scene in enumerate(scenes):
+        video_urls = []
+        for scene in scenes:
             if scene.strip():
                 output = replicate.run(
                     "lightricks/ltx-video:0a4639343715c0e270220645607a935406c8021d7237073103138865f3750567",
                     input={"prompt": scene, "num_frames": 121}
                 )
                 url = output[0] if isinstance(output, list) else output
-                
-                vid_data = requests.get(url).content
-                local_name = f"temp_scene_{i}.mp4"
-                with open(local_name, "wb") as f:
-                    f.write(vid_data)
-                video_files.append(local_name)
-        
-        if video_files:
-            clips = [VideoFileClip(f) for f in video_files]
-            final_clip = concatenate_videoclips(clips)
-            final_filename = "final_output_film.mp4"
-            final_clip.write_videofile(final_filename, codec="libx264", audio=False)
-            
-            for c in clips:
-                c.close()
-            final_clip.close()
-            
-            return final_filename
-        return None
+                video_urls.append(url)
+        return video_urls
     except Exception as e:
         print(f"خطأ في الإنتاج السينمائي: {e}")
-        return None
+        return []
 
 # دالة التطوير الذاتي الفعلي ورفع التحديث لـ GitHub
 def evolve_self():
@@ -85,10 +67,9 @@ def evolve_self():
     except Exception as e:
         print(f"خطأ في التطوير الذاتي: {e}")
 
-# النبضة التلقائية الخلفية للتطور
 def autonomous_cycle():
     while True:
-        time.sleep(14400)  # كل 4 ساعات يفحص ويطور نفسه برمجياً
+        time.sleep(14400)
         evolve_self()
 
 if GITHUB_TOKEN and REPO_NAME:
@@ -104,15 +85,14 @@ if bot:
             bot.reply_to(message, "⚠️ يرجى إرسال القصة بعد الأمر، مثل: `/film كوكب ذهبي غامض`")
             return
             
-        bot.reply_to(message, "🎬 جاري العمل كمخرج سينمائي... يتم توليد المقاطع متسلسلة ثم دمجها في فيديو واحد...")
+        bot.reply_to(message, "🎬 جاري العمل كمخرج سينمائي... يتم توليد المقاطع تباعاً...")
         
-        film_path = produce_film(prompt)
-        if film_path and os.path.exists(film_path):
-            with open(film_path, 'rb') as f:
-                bot.send_video(message.chat.id, f, caption="🎥 **إليك الفيلم المجمع النهائي المستمر!**")
-            os.remove(film_path)
+        links = produce_film(prompt)
+        if links:
+            for i, link in enumerate(links):
+                bot.send_message(message.chat.id, f"🎥 المشهد رقم {i+1}:\n{link}")
         else:
-            bot.send_message(message.chat.id, "⚠️ حدث خطأ أثناء عملية إنتاج وتجميع الفيلم.")
+            bot.send_message(message.chat.id, "⚠️ حدث خطأ أثناء عملية توليد المقاطع.")
 
     @bot.message_handler(func=lambda message: True)
     def handle_chat(message):
