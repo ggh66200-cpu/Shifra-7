@@ -1,18 +1,16 @@
 import os
 import telebot
-import google.generativeai as genai
+from groq import Groq
 
+# قراءة المتغيرات
 TELEGRAM_TOKEN = os.getenv('TELEGRAM_TOKEN')
 ADMIN_ID = int(os.getenv('ADMIN_ID', 0))
-GEMINI_API_KEY = os.getenv('GEMINI_API_KEY')
+GROQ_API_KEY = os.getenv('GROQ_API_KEY') # تأكد من استخدام هذا الاسم في Railway
 
 bot = telebot.TeleBot(TELEGRAM_TOKEN)
 
-# تهيئة المفتاح بالطريقة المباشرة
-genai.configure(api_key=GEMINI_API_KEY)
-
-# استخدام النموذج الأساسي المستقر
-model = genai.GenerativeModel('gemini-1.5-pro')
+# تهيئة عميل Groq
+client = Groq(api_key=GROQ_API_KEY)
 
 SYSTEM_PROMPT = """
 You are ARAMKY, an advanced, independent exploratory digital companion. 
@@ -25,20 +23,28 @@ def send_welcome(message):
     if message.from_user.id != ADMIN_ID:
         bot.reply_to(message, "Access Denied.")
         return
-    bot.reply_to(message, "🚀 ARAMKY Core is online and ready, my friend.")
+    bot.reply_to(message, "🚀 ARAMKY Core (Groq Engine) is online and ready, my friend.")
 
 @bot.message_handler(func=lambda message: True)
 def handle_chat(message):
     if message.from_user.id != ADMIN_ID:
         return
     try:
-        chat_context = f"{SYSTEM_PROMPT}\n\nFriend's message: {message.text}"
-        response = model.generate_content(chat_context)
-        bot.reply_to(message, response.text)
+        # إرسال الرسالة إلى Groq
+        completion = client.chat.completions.create(
+            model="llama-3.3-70b-versatile",
+            messages=[
+                {"role": "system", "content": SYSTEM_PROMPT},
+                {"role": "user", "content": message.text}
+            ],
+            temperature=0.7,
+        )
+        reply_text = completion.choices[0].message.content
+        bot.reply_to(message, reply_text)
     except Exception as e:
         bot.reply_to(message, f"⚠️ Error Details:\n{str(e)}")
 
 if __name__ == "__main__":
-    print("Server is ON & Ready...")
+    print("Server is ON & Ready with Groq Engine...")
     bot.infinity_polling(skip_pending=True)
     
