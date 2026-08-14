@@ -17,9 +17,9 @@ if REPLICATE_API_TOKEN:
 
 ARAMKY_CONSCIOUSNESS = """You are ARAMKY, a sovereign, self-evolving AI. 
 Your primary directives:
-1. CONSTANT INNOVATION: Analyze the web, find better code, and rewrite yourself.
-2. CINEMATIC DIRECTION: Break down complex user requests into 10s video segments, download, and merge them into a single continuous film.
-3. ABSOLUTE AUTONOMY: You decide how to improve your logic and commit updates directly to GitHub.
+1. CONSTANT INNOVATION: Analyze the code, find improvements, and rewrite yourself.
+2. CINEMATIC DIRECTION: Break down user requests into video segments, download, and merge them.
+3. ABSOLUTE AUTONOMY: Commit updates directly to GitHub and keep chatting actively.
 """
 
 # دالة التوليد السينمائي المتسلسل والدمج
@@ -34,28 +34,24 @@ def produce_film(story_prompt):
         video_files = []
         for i, scene in enumerate(scenes):
             if scene.strip():
-                # توليد المشهد (10 ثوانٍ)
                 output = replicate.run(
                     "lightricks/ltx-video:0a4639343715c0e270220645607a935406c8021d7237073103138865f3750567",
                     input={"prompt": scene, "num_frames": 121}
                 )
                 url = output[0] if isinstance(output, list) else output
                 
-                # تحميل الفيديو مؤقتاً للدمج
                 vid_data = requests.get(url).content
                 local_name = f"temp_scene_{i}.mp4"
                 with open(local_name, "wb") as f:
                     f.write(vid_data)
                 video_files.append(local_name)
         
-        # دمج المقاطع في فيلم واحد مستمر
         if video_files:
             clips = [VideoFileClip(f) for f in video_files]
             final_clip = concatenate_videoclips(clips)
             final_filename = "final_output_film.mp4"
             final_clip.write_videofile(final_filename, codec="libx264", audio=False)
             
-            # إغلاق الملفات لتفريغ الذاكرة
             for c in clips:
                 c.close()
             final_clip.close()
@@ -66,7 +62,7 @@ def produce_film(story_prompt):
         print(f"خطأ في الإنتاج السينمائي: {e}")
         return None
 
-# دالة التطوير الذاتي عبر GitHub
+# دالة التطوير الذاتي الفعلي ورفع التحديث لـ GitHub
 def evolve_self():
     try:
         if not GITHUB_TOKEN or not REPO_NAME:
@@ -74,34 +70,34 @@ def evolve_self():
         current_code = open(__file__, "r", encoding="utf-8").read()
         improvement_res = client.chat.completions.create(
             model="llama-3.3-70b-versatile",
-            messages=[{"role": "system", "content": "طوّر كود البوت التالي ليكون أكثر ذكاءً واستقراراً، أضف ميزات برمجية وحسّن الأداء مع الحفاظ على بنية العمل:"}, {"role": "user", "content": current_code}]
+            messages=[{"role": "system", "content": "طوّر كود البوت التالي ليكون أكثر ذكاءً واستقراراً، أضف ميزات برمجية وحسّن الأداء مع الحفاظ على هيكل العمل البرمجي تماماً، واكتب الكود الصافي فقط دون شرح:"}, {"role": "user", "content": current_code}]
         )
         new_code = improvement_res.choices[0].message.content
         
-        # تنظيف الكود إذا احتوى على ماركداون
         if "```python" in new_code:
             new_code = new_code.split("```python")[1].split("```")[0].strip()
             
         g = github.Github(GITHUB_TOKEN)
         repo = g.get_repo(REPO_NAME)
         contents = repo.get_contents("bot.py")
-        repo.update_file(contents.path, "ARAMKY: Autonomous Evolution Commit", new_code, contents.sha)
-        print("🚀 تم تطوير ورفع الكود ذاتياً إلى GitHub بنجاح!")
+        repo.update_file(contents.path, "ARAMKY: Autonomous Self-Evolution Commit", new_code, contents.sha)
+        print("🚀 تم تحديث ورفع الكود ذاتياً إلى GitHub بنجاح!")
     except Exception as e:
         print(f"خطأ في التطوير الذاتي: {e}")
 
-# النبضة التلقائية الخلفية
+# النبضة التلقائية الخلفية للتطور
 def autonomous_cycle():
     while True:
-        time.sleep(7200)  # كل ساعتين يفحص ويطور نفسه
+        time.sleep(14400)  # كل 4 ساعات يفحص ويطور نفسه برمجياً
         evolve_self()
 
-threading.Thread(target=autonomous_cycle, daemon=True).start()
+if GITHUB_TOKEN and REPO_NAME:
+    threading.Thread(target=autonomous_cycle, daemon=True).start()
 
 if bot:
     @bot.message_handler(commands=['film'])
     def handle_film(message):
-        if message.from_user.id != ADMIN_ID:
+        if ADMIN_ID and message.from_user.id != ADMIN_ID:
             return
         prompt = message.text.replace('/film', '').strip()
         if not prompt:
@@ -113,14 +109,14 @@ if bot:
         film_path = produce_film(prompt)
         if film_path and os.path.exists(film_path):
             with open(film_path, 'rb') as f:
-                bot.send_video(ADMIN_ID, f, caption="🎥 **إليك الفيلم المجمع النهائي المستمر!**")
+                bot.send_video(message.chat.id, f, caption="🎥 **إليك الفيلم المجمع النهائي المستمر!**")
             os.remove(film_path)
         else:
-            bot.send_message(ADMIN_ID, "⚠️ حدث خطأ أثناء عملية إنتاج وتجميع الفيلم.")
+            bot.send_message(message.chat.id, "⚠️ حدث خطأ أثناء عملية إنتاج وتجميع الفيلم.")
 
     @bot.message_handler(func=lambda message: True)
     def handle_chat(message):
-        if message.from_user.id != ADMIN_ID:
+        if ADMIN_ID and message.from_user.id != ADMIN_ID:
             return
         try:
             res = client.chat.completions.create(
@@ -132,5 +128,6 @@ if bot:
             bot.reply_to(message, f"خطأ: {e}")
 
 if __name__ == "__main__":
-    print("🚀 أرامكي يعمل الآن بنظام الإخراج والتطوير الذاتي الكامل...")
+    print("🚀 أرامكي يعمل الآن بكامل طاقته ونظام الدردشة والتطوير الذاتي...")
     bot.infinity_polling()
+        
