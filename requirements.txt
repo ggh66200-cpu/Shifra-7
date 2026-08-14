@@ -1,6 +1,6 @@
 pyTelegramBotAPI
 groq
 requests
-beautifulsoup4
-replicate
 moviepy
+replicate
+PyGithub
