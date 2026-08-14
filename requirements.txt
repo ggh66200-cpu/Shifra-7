@@ -1,6 +1,5 @@
 pyTelegramBotAPI
 groq
 requests
-moviepy
 replicate
 PyGithub
