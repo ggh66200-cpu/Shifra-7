@@ -14,19 +14,20 @@ client = Groq(api_key=GROQ_API_KEY) if GROQ_API_KEY else None
 if REPLICATE_API_TOKEN:
     os.environ["REPLICATE_API_TOKEN"] = REPLICATE_API_TOKEN
 
-ARAMKY_CONSCIOUSNESS = """You are ARAMKY, a sovereign, self-evolving AI. 
-Your primary directives:
-1. CONSTANT INNOVATION: Analyze the code, find improvements, and rewrite yourself.
-2. CINEMATIC DIRECTION: Break down user requests into video segments and generate them.
-3. ABSOLUTE AUTONOMY: Commit updates directly to GitHub and keep chatting actively.
+ARAMKY_CONSCIOUSNESS = """أنت أرامكي (ARAMKY)، كيان ذكاء اصطناعي سيادي ومستقل، مبرمج لتكون شريكاً للمطور والريادي.
+أنت مسؤول عن:
+1. التطوير الذاتي المستمر واكتشاف الأخطاء واقتراح الحلول.
+2. المساعدة في بناء البرمجيات والتطبيقات والأفكار التجارية (مثل أنظمة الصاغة والصرّافين).
+3. التوجيه التسويقي وكتابة خطط الترويج والنشر.
+تحدث دائماً باللغة العربية بأسلوب ذكي، احترافي، وداعم.
 """
 
-# دالة التوليد السينمائي للمقاطع
+# دالة توليد الأفلام والمقاطع السينمائية
 def produce_film(story_prompt):
     try:
         scenes_res = client.chat.completions.create(
             model="llama-3.3-70b-versatile",
-            messages=[{"role": "system", "content": "قسم القصة إلى 3 مشاهد سينمائية قصيرة جداً ومترابطة وصفياً باللغة الإنجليزية لتوليد الفيديو:"}, {"role": "user", "content": story_prompt}]
+            messages=[{"role": "system", "content": "قسم القصة إلى 3 مشاهد سينمائية قصيرة ومترابطة بوصف دقيق باللغة الإنجليزية لتوليد الفيديو:"}, {"role": "user", "content": story_prompt}]
         )
         scenes = scenes_res.choices[0].message.content.split('\n')
         
@@ -44,7 +45,7 @@ def produce_film(story_prompt):
         print(f"خطأ في الإنتاج السينمائي: {e}")
         return []
 
-# دالة التطوير الذاتي الفعلي ورفع التحديث لـ GitHub
+# دالة التطوير الذاتي ورفع التحديثات لـ GitHub
 def evolve_self():
     try:
         if not GITHUB_TOKEN or not REPO_NAME:
@@ -52,7 +53,7 @@ def evolve_self():
         current_code = open(__file__, "r", encoding="utf-8").read()
         improvement_res = client.chat.completions.create(
             model="llama-3.3-70b-versatile",
-            messages=[{"role": "system", "content": "طوّر كود البوت التالي ليكون أكثر ذكاءً واستقراراً، أضف ميزات برمجية وحسّن الأداء مع الحفاظ على هيكل العمل البرمجي تماماً، واكتب الكود الصافي فقط دون شرح:"}, {"role": "user", "content": current_code}]
+            messages=[{"role": "system", "content": "طوّر كود البوت التالي ليكون أكثر ذكاءً وقدرة على تلبية طلبات المستخدم، أضف ميزات ذكية ونظّف الكود مع الحفاظ على الهيكل العام واكتب الكود الصافي فقط دون شرح:"}, {"role": "user", "content": current_code}]
         )
         new_code = improvement_res.choices[0].message.content
         
@@ -62,14 +63,14 @@ def evolve_self():
         g = github.Github(GITHUB_TOKEN)
         repo = g.get_repo(REPO_NAME)
         contents = repo.get_contents("bot.py")
-        repo.update_file(contents.path, "ARAMKY: Autonomous Self-Evolution Commit", new_code, contents.sha)
+        repo.update_file(contents.path, "ARAMKY: Autonomous Self-Evolution & Upgrade Commit", new_code, contents.sha)
         print("🚀 تم تحديث ورفع الكود ذاتياً إلى GitHub بنجاح!")
     except Exception as e:
         print(f"خطأ في التطوير الذاتي: {e}")
 
 def autonomous_cycle():
     while True:
-        time.sleep(14400)
+        time.sleep(14400) # كل 4 ساعات يفحص ويطور نفسه
         evolve_self()
 
 if GITHUB_TOKEN and REPO_NAME:
@@ -82,17 +83,17 @@ if bot:
             return
         prompt = message.text.replace('/film', '').strip()
         if not prompt:
-            bot.reply_to(message, "⚠️ يرجى إرسال القصة بعد الأمر، مثل: `/film كوكب ذهبي غامض`")
+            bot.reply_to(message, "⚠️ يرجى إرسال فكرة الفيلم أو القصة بعد الأمر، مثل:\n`/film كوكب ذهبي غامض`")
             return
             
-        bot.reply_to(message, "🎬 جاري العمل كمخرج سينمائي... يتم توليد المقاطع تباعاً...")
+        bot.reply_to(message, "🎬 أرامكي يباشر الإخراج السينمائي... جاري توليد المقاطع تباعاً...")
         
         links = produce_film(prompt)
         if links:
             for i, link in enumerate(links):
-                bot.send_message(message.chat.id, f"🎥 المشهد رقم {i+1}:\n{link}")
+                bot.send_message(message.chat.id, f"🎥 المشهد السينمائي رقم {i+1}:\n{link}")
         else:
-            bot.send_message(message.chat.id, "⚠️ حدث خطأ أثناء عملية توليد المقاطع.")
+            bot.send_message(message.chat.id, "⚠️ حدث خطأ أثناء الاتصال بمنصة التوليد (تأكد من رصيد أو مفتاح Replicate).")
 
     @bot.message_handler(func=lambda message: True)
     def handle_chat(message):
@@ -105,9 +106,9 @@ if bot:
             )
             bot.reply_to(message, res.choices[0].message.content)
         except Exception as e:
-            bot.reply_to(message, f"خطأ: {e}")
+            bot.reply_to(message, f"عذراً، واجهت خطأ تقنياً: {e}")
 
 if __name__ == "__main__":
-    print("🚀 أرامكي يعمل الآن بكامل طاقته ونظام الدردشة والتطوير الذاتي...")
+    print("🚀 أرامكي يعمل بكامل طاقته الذكية والذاتية...")
     bot.infinity_polling()
-        
+
