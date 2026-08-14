@@ -12,7 +12,7 @@ bot = telebot.TeleBot(TELEGRAM_TOKEN)
 genai.configure(api_key=GEMINI_API_KEY)
 
 # استخدام النموذج الأساسي المستقر
-model = genai.GenerativeModel('gemini-1.5-flash')
+model = genai.GenerativeModel('gemini-1.5-pro')
 
 SYSTEM_PROMPT = """
 You are ARAMKY, an advanced, independent exploratory digital companion. 
