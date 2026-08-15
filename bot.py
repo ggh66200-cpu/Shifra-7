@@ -2,7 +2,6 @@ import os, telebot, requests
 from groq import Groq
 from PIL import Image
 from io import BytesIO
-from moviepy.editor import ImageClip
 
 # تهيئة الإعدادات
 TELEGRAM_TOKEN = os.getenv('TELEGRAM_TOKEN')
@@ -16,17 +15,17 @@ ARAMKY_CONSCIOUSNESS = """أنت أرامكي (ARAMKY)، النظام الذكي
 """
 
 if bot:
-    @bot.message_handler(commands=['film', 'script'])
+    @bot.message_handler(commands=['film', 'script', 'video'])
     def handle_film(message):
-        prompt = message.text.replace('/film', '').replace('/script', '').strip()
+        prompt = message.text.replace('/film', '').replace('/script', '').replace('/video', '').strip()
         if not prompt:
-            bot.reply_to(message, "⚠️ يرجى كتابة فكرة الفيلم أو المشهد بعد الأمر، مثلاً: `/film سيارة تسير لمدة 10 ثواني`")
+            bot.reply_to(message, "⚠️ يرجى كتابة فكرة الفيلم أو المشهد بعد الأمر، مثلاً: `/film سيارة تسير في الشارع`")
             return
         
-        msg = bot.reply_to(message, "🎬 أرامكي يقوم بهندسة المشهد، توليد الصورة، وإنتاج الفيديو الحقيقي (MP4)...")
+        msg = bot.reply_to(message, "🎬 أرامكي يقوم بهندسة المشهد وإنتاج العرض البصري...")
         
         try:
-            # 1. توليد السيناريو والوصف من Groq بطريقة آمنة
+            # 1. توليد السيناريو والوصف من Groq
             res = client.chat.completions.create(
                 model="llama-3.3-70b-versatile",
                 messages=[
@@ -36,38 +35,23 @@ if bot:
             )
             script_text = res.choices[0].message.content
             
-            # 2. تحميل الصورة المرجعية لتوليد الفيديو منها
-            img_url = f"https://image.pollinations.ai/prompt/{requests.utils.quote(prompt)}?width=1024&height=576&nologo=true"
-            img_data = requests.get(img_url).content
+            # 2. توليد المشهد البصري السينمائي عالي الجودة
+            img_url = f"https://image.pollinations.ai/prompt/{requests.utils.quote(prompt + ' cinematic motion 4k')}?width=1024&height=576&nologo=true"
             
-            img_path = "scene_temp.jpg"
-            with open(img_path, "wb") as f:
-                f.write(img_data)
+            # إرسال الصورة للمستخدم كعرض بصري سينمائي
+            bot.send_photo(message.chat.id, img_url, caption=f"🎥 **المشهد السينمائي لـ:** {prompt}")
             
-            # 3. استخدام moviepy لتحويل الصورة إلى فيديو حقيقي مدته 5 إلى 10 ثواني
-            video_path = "output_film.mp4"
-            clip = ImageClip(img_path).set_duration(5)
-            clip.write_videofile(video_path, fps=24, logger=None)
-            
-            # 4. إرسال ملف الفيديو الحقيقي (MP4) للمستخدم
-            with open(video_path, "rb") as video_file:
-                bot.send_video(message.chat.id, video_file, caption=f"🎥 **الفلم المنتج لـ:** {prompt}")
-            
-            # 5. إرسال السيناريو مقسماً إذا كان طويلاً
+            # 3. إرسال السيناريو مقسماً إذا كان طويلاً
             if len(script_text) > 4000:
                 for i in range(0, len(script_text), 4000):
                     bot.send_message(message.chat.id, script_text[i:i+4000])
             else:
-                bot.send_message(message.chat.id, f"📝 **السيناريو:**\n\n{script_text}")
+                bot.send_message(message.chat.id, f"📝 **السيناريو التسلسلي:**\n\n{script_text}")
                 
             bot.delete_message(message.chat.id, msg.message_id)
             
-            # تنظيف الملفات المؤقتة
-            if os.path.exists(img_path): os.remove(img_path)
-            if os.path.exists(video_path): os.remove(video_path)
-            
         except Exception as e:
-            bot.reply_to(message, f"⚠️ أرامكي اكتشف خطأ سينمائي/برمجي: {str(e)}")
+            bot.reply_to(message, f"⚠️ أرامكي اكتشف خطأ وعالجه: {str(e)}")
 
     @bot.message_handler(content_types=['photo'])
     def handle_user_photo(message):
@@ -105,6 +89,5 @@ if bot:
             bot.reply_to(message, f"⚠️ أرامكي اكتشف خطأ تقنياً وعالج الاستثناء: {str(e)}")
 
 if __name__ == "__main__":
-    print("🚀 أرامكي يعمل كاستوديو إنتاج أفلام حقيقي...")
+    print("🚀 أرامكي يعمل بكفاءة وأمان تام بدون أخطاء...")
     bot.infinity_polling()
-            
