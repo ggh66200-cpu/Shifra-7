@@ -1,5 +1,6 @@
 pyTelegramBotAPI
 groq
 requests
-replicate
-PyGithub
+moviepy
+Pillow
+github3.py
